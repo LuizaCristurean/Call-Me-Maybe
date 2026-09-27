@@ -1,0 +1,15 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.mypy_cache/
+.pytest_cache/
+
+# uv / venv
+.venv/
+
+# generated output (never commit results, per subject)
+data/output/
+
+# OS junk
+.DS_Store
