@@ -25,3 +25,10 @@ package = false
 
 [dependency-groups]
 dev = ["flake8>=7.0", "mypy>=1.10"]
+
+[tool.mypy]
+mypy_path = "llm_sdk"
+
+[[tool.mypy.overrides]]
+module = "llm_sdk.*"
+follow_imports = "silent"
