@@ -15,6 +15,9 @@ from pathlib import Path
 from pydantic import ValidationError
 from .io_utils import load_functions_definition, load_test_prompts
 from .models import FunctionsDefinition, TestPrompts
+from llm_sdk import Small_LLM_Model
+from .io_utils import write_results
+from .pipeline import run_pipeline
 
 DEFAULT_FUNCTIONS = Path("data/input/functions_definition.json")
 DEFAULT_TESTS = Path("data/input/function_calling_tests.json")
@@ -83,7 +86,7 @@ def main(argv: list[str] | None = None) -> None:
     """Program entry point, called from call_me_maybe.py."""
     args = parse_args(argv)
     functions, tests = load_inputs(args.functions_definition, args.input)
-    print(
-        f"Loaded {len(functions.root)} functions "
-        f"and {len(tests.root)} prompts."
-        )
+    model = Small_LLM_Model()
+    entries = run_pipeline(model, functions, tests)
+    write_results(args.output, entries)
+    print(f"Wrote {len(entries.root)} results to {args.output}")
