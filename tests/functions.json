@@ -1,0 +1,32 @@
+[
+  {
+    "name": "fn_multiply",
+    "description": "Multiply two numbers.",
+    "parameters": {"a": {"type": "number"}, "b": {"type": "number"}},
+    "returns": {"type": "number"}
+  },
+  {
+    "name": "fn_is_even",
+    "description": "Check whether a number is even.",
+    "parameters": {"n": {"type": "number"}},
+    "returns": {"type": "boolean"}
+  },
+  {
+    "name": "fn_set_flag",
+    "description": "Turn a named feature flag on or off.",
+    "parameters": {"name": {"type": "string"}, "enabled": {"type": "boolean"}},
+    "returns": {"type": "string"}
+  },
+  {
+    "name": "fn_get_time",
+    "description": "Return the current time.",
+    "parameters": {},
+    "returns": {"type": "string"}
+  },
+  {
+    "name": "fn_echo",
+    "description": "Repeat a text back.",
+    "parameters": {"text": {"type": "string"}},
+    "returns": {"type": "string"}
+  }
+]

@@ -4,6 +4,14 @@ from __future__ import annotations
 from .models import FunctionDef, FunctionsDefinition
 
 
+EXAMPLE = (
+    "Example with a different function:\n"
+    "Request: Replace all digits in 'a1b2' with hashes\n"
+    'Call: {"name": "fn_replace", "parameters": {"text": "a1b2", '
+    '"pattern": "\\\\d", "replacement": "#"}}\n'
+)
+
+
 def describe_function(function: FunctionDef) -> str:
     """Return a one-line description of a function and its parameters."""
     params = ", ".join(
@@ -23,5 +31,7 @@ def build_prompt(functions: FunctionsDefinition, request: str) -> str:
         "For a regex, use a pattern like \\\\d+ (backslashes doubled).\n"
         "Available functions:\n"
         + "\n".join(lines)
-        + f"\n\nRequest: {request}\nCall: "
+        + "\n\n"
+        + EXAMPLE
+        + f"\nRequest: {request}\nCall: "
     )

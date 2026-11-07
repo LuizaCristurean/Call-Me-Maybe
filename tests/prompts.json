@@ -1,0 +1,11 @@
+[
+  {"prompt": "Multiply -2.5 by 4"},
+  {"prompt": "Is 7 even?"},
+  {"prompt": "Turn on the flag dark_mode"},
+  {"prompt": "Turn off the flag beta"},
+  {"prompt": "What time is it?"},
+  {"prompt": "Echo the text He said \"hi\" to me"},
+  {"prompt": "Echo the text café ☕ and 100%"},
+  {"prompt": "Multiply 123456789 by 0.001"},
+  {"prompt": ""}
+]

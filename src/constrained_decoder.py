@@ -7,6 +7,7 @@ import re
 
 ESCAPE_CHARS = '"\\/bfnrt'
 MAX_STRING_TOKENS = 120
+MAX_NUMBER_TOKENS = 30
 
 
 def select_token(logits: list[float], allowed: set[int]) -> int:
@@ -34,8 +35,8 @@ def allowed_for_choices(
     return allowed
 
 
-NUMBER_PREFIX = re.compile(r"-?([0-9]+(\.[0-9]*)?)?")
-NUMBER_COMPLETE = re.compile(r"-?[0-9]+(\.[0-9]+)?")
+NUMBER_PREFIX = re.compile(r" ?-?([0-9]+(\.[0-9]*)?)?")
+NUMBER_COMPLETE = re.compile(r" ?-?[0-9]+(\.[0-9]+)?")
 
 
 def can_extend_number(text: str) -> bool:
@@ -169,13 +170,17 @@ class ConstrainedDecoder:
         """
         end_id = self.comma_id if more else self.brace_id
         typed = ""
-        while True:
+        for _ in range(MAX_NUMBER_TOKENS):
             allowed = allowed_for_number(self.vocab, typed, {end_id})
             token_id = self.best(allowed)
             if token_id == end_id:
-                return typed
+                break
             self.append(token_id)
             typed += self.vocab[token_id]
+        if not is_complete_number(typed):
+            self.force("0")
+            typed += "0"
+        return typed
 
     def string(self) -> str:
         """Write the content of a JSON string (still escaped).
