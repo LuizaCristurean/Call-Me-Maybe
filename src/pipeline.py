@@ -72,6 +72,7 @@ def run_pipeline(
     model: Small_LLM_Model,
     functions: FunctionsDefinition,
     prompts: TestPrompts,
+    verbose: bool = False,
 ) -> OutputEntries:
     """Turn every test prompt into a function call."""
     vocab = load_vocab(model)
@@ -80,7 +81,9 @@ def run_pipeline(
     for number, item in enumerate(prompts.root, start=1):
         print(f"[{number}/{len(prompts.root)}] {item.prompt}")
         prompt = build_prompt(functions, item.prompt)
-        decoder = ConstrainedDecoder.create(model, vocab, prompt, strings)
+        decoder = ConstrainedDecoder.create(
+            model, vocab, prompt, strings, verbose
+        )
         try:
             call = generate_call(decoder, functions, item.prompt)
         except (ValueError, RuntimeError) as error:

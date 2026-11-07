@@ -51,6 +51,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=DEFAULT_OUTPUT,
         help="Where to write function_calling_results.json.",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="print every decoding step",
+    )
     return parser.parse_args(argv)
 
 
@@ -90,6 +95,6 @@ def main(argv: list[str] | None = None) -> None:
         model = Small_LLM_Model()
     except OSError as error:
         sys.exit(f"error: could not load the model: {error}")
-    entries = run_pipeline(model, functions, tests)
+    entries = run_pipeline(model, functions, tests, args.verbose)
     write_results(args.output, entries)
     print(f"Wrote {len(entries.root)} results to {args.output}")

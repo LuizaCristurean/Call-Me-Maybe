@@ -150,6 +150,7 @@ class ConstrainedDecoder(BaseModel):
     brace_id: int
     ids: list[int]
     generated: str = ""
+    verbose: bool = False
 
     @classmethod
     def create(
@@ -158,6 +159,7 @@ class ConstrainedDecoder(BaseModel):
         vocab: list[str],
         prompt: str,
         strings: StringTokens | None = None,
+        verbose: bool = False,
     ) -> ConstrainedDecoder:
         """Build a decoder that starts from `prompt`."""
         return cls(
@@ -167,17 +169,33 @@ class ConstrainedDecoder(BaseModel):
             comma_id=vocab.index(","),
             brace_id=vocab.index("}"),
             ids=model.encode(prompt)[0].tolist(),
+            verbose=verbose,
         )
 
     def force(self, text: str) -> None:
         """Append fixed text: no choice, so no model scores needed."""
+        if self.verbose:
+            print(f"  forced {text!r}")
         self.ids += self.model.encode(text)[0].tolist()
         self.generated += text
+
+    def show_step(
+        self, logits: list[float], allowed: set[int], token_id: int
+    ) -> None:
+        """Print one decoding step (used by --verbose)."""
+        wanted = max(range(len(logits)), key=lambda i: logits[i])
+        line = f"  {len(allowed):>6} allowed -> {self.vocab[token_id]!r}"
+        if wanted != token_id:
+            line += f"   (model preferred {self.vocab[wanted]!r}, blocked)"
+        print(line)
 
     def best(self, allowed: set[int]) -> int:
         """Return the allowed token the model scores highest."""
         logits = self.model.get_logits_from_input_ids(self.ids)
-        return select_token(logits, allowed)
+        token_id = select_token(logits, allowed)
+        if self.verbose:
+            self.show_step(logits, allowed, token_id)
+        return token_id
 
     def append(self, token_id: int) -> None:
         """Add one token to the text written so far."""
