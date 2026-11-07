@@ -1,4 +1,7 @@
-.PHONY: install run debug clean lint lint-strict
+.PHONY: install run debug clean lint lint-strict test
+
+test:
+	uv run python -m pytest tests -q
 
 install:
 	uv sync

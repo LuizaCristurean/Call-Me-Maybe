@@ -24,7 +24,11 @@ llm-sdk = { path = "llm_sdk", editable = true }
 package = false
 
 [dependency-groups]
-dev = ["flake8>=7.0", "mypy>=1.10"]
+dev = [
+    "flake8>=7.0",
+    "mypy>=1.10",
+    "pytest>=9.2.0",
+]
 
 [tool.mypy]
 mypy_path = "llm_sdk"
