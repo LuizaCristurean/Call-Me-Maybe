@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 from llm_sdk import Small_LLM_Model
+from pydantic import BaseModel, ConfigDict
 import re
 
 
@@ -37,20 +38,27 @@ def allowed_for_choices(
 
 NUMBER_PREFIX = re.compile(r" ?-?([0-9]+(\.[0-9]*)?)?")
 NUMBER_COMPLETE = re.compile(r" ?-?[0-9]+(\.[0-9]+)?")
+INTEGER_PREFIX = re.compile(r" ?-?[0-9]*")
+INTEGER_COMPLETE = re.compile(r" ?-?[0-9]+")
 
 
-def can_extend_number(text: str) -> bool:
+def can_extend_number(text: str, integer: bool = False) -> bool:
     """Return True if `text` can still grow into a valid JSON number."""
-    return NUMBER_PREFIX.fullmatch(text) is not None
+    pattern = INTEGER_PREFIX if integer else NUMBER_PREFIX
+    return pattern.fullmatch(text) is not None
 
 
-def is_complete_number(text: str) -> bool:
+def is_complete_number(text: str, integer: bool = False) -> bool:
     """Return True if `text` is already a valid JSON number."""
-    return NUMBER_COMPLETE.fullmatch(text) is not None
+    pattern = INTEGER_COMPLETE if integer else NUMBER_COMPLETE
+    return pattern.fullmatch(text) is not None
 
 
 def allowed_for_number(
-    vocab: list[str], typed: str, end_ids: set[int]
+    vocab: list[str],
+    typed: str,
+    end_ids: set[int],
+    integer: bool = False,
 ) -> set[int]:
     """Return the token ids allowed while writing a JSON number.
 
@@ -60,9 +68,9 @@ def allowed_for_number(
     """
     allowed: set[int] = set()
     for token_id, text in enumerate(vocab):
-        if text and can_extend_number(typed + text):
+        if text and can_extend_number(typed + text, integer):
             allowed.add(token_id)
-    if is_complete_number(typed):
+    if is_complete_number(typed, integer):
         allowed |= end_ids
     return allowed
 
@@ -92,14 +100,21 @@ def scan_string_text(
     return len(text), False, escaped
 
 
-class StringTokens:
+class StringTokens(BaseModel):
     """Groups the vocabulary by how a token behaves inside a string."""
 
-    def __init__(self, vocab: list[str]) -> None:
+    dangling: set[int]
+    closers: dict[int, str]
+    after_escape: set[int]
+    open_ids: set[int]
+
+    @classmethod
+    def from_vocab(cls, vocab: list[str]) -> StringTokens:
+        """Classify every token of the vocabulary once."""
         plain: set[int] = set()
-        self.dangling: set[int] = set()
-        self.closers: dict[int, str] = {}
-        self.after_escape: set[int] = set()
+        dangling: set[int] = set()
+        closers: dict[int, str] = {}
+        after_escape: set[int] = set()
         for token_id, text in enumerate(vocab):
             if not text:
                 continue
@@ -107,30 +122,52 @@ class StringTokens:
             if result is not None:
                 end, closed, escaped = result
                 if closed:
-                    self.closers[token_id] = text[:end]
+                    closers[token_id] = text[:end]
                 elif escaped:
-                    self.dangling.add(token_id)
+                    dangling.add(token_id)
                 else:
                     plain.add(token_id)
             result = scan_string_text(text, True)
             if result is not None and not result[1] and not result[2]:
-                self.after_escape.add(token_id)
-        self.open_ids = plain | self.dangling | set(self.closers)
+                after_escape.add(token_id)
+        return cls(
+            dangling=dangling,
+            closers=closers,
+            after_escape=after_escape,
+            open_ids=plain | dangling | set(closers),
+        )
 
 
-class ConstrainedDecoder:
+class ConstrainedDecoder(BaseModel):
     """Writes the output one token at a time, following the rules."""
 
-    def __init__(
-        self, model: Small_LLM_Model, vocab: list[str], prompt: str
-    ) -> None:
-        self.model = model
-        self.vocab = vocab
-        self.ids: list[int] = model.encode(prompt)[0].tolist()
-        self.generated = ""
-        self.comma_id = vocab.index(",")
-        self.brace_id = vocab.index("}")
-        self.strings = StringTokens(vocab)
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    model: Small_LLM_Model
+    vocab: list[str]
+    strings: StringTokens
+    comma_id: int
+    brace_id: int
+    ids: list[int]
+    generated: str = ""
+
+    @classmethod
+    def create(
+        cls,
+        model: Small_LLM_Model,
+        vocab: list[str],
+        prompt: str,
+        strings: StringTokens | None = None,
+    ) -> ConstrainedDecoder:
+        """Build a decoder that starts from `prompt`."""
+        return cls(
+            model=model,
+            vocab=vocab,
+            strings=strings or StringTokens.from_vocab(vocab),
+            comma_id=vocab.index(","),
+            brace_id=vocab.index("}"),
+            ids=model.encode(prompt)[0].tolist(),
+        )
 
     def force(self, text: str) -> None:
         """Append fixed text: no choice, so no model scores needed."""
@@ -162,22 +199,25 @@ class ConstrainedDecoder:
             typed += self.vocab[token_id]
         return typed
 
-    def number(self, more: bool) -> str:
+    def number(self, more: bool, integer: bool = False) -> str:
         """Write a JSON number; stop when the model picks the separator.
 
         `more` tells whether another parameter follows (`,`) or not (`}`).
+        With `integer` the number has no decimal part.
         The separator itself is not written; the caller forces it.
         """
         end_id = self.comma_id if more else self.brace_id
         typed = ""
         for _ in range(MAX_NUMBER_TOKENS):
-            allowed = allowed_for_number(self.vocab, typed, {end_id})
+            allowed = allowed_for_number(
+                self.vocab, typed, {end_id}, integer
+            )
             token_id = self.best(allowed)
             if token_id == end_id:
                 break
             self.append(token_id)
             typed += self.vocab[token_id]
-        if not is_complete_number(typed):
+        if not is_complete_number(typed, integer):
             self.force("0")
             typed += "0"
         return typed

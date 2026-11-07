@@ -86,7 +86,10 @@ def main(argv: list[str] | None = None) -> None:
     """Program entry point, called from call_me_maybe.py."""
     args = parse_args(argv)
     functions, tests = load_inputs(args.functions_definition, args.input)
-    model = Small_LLM_Model()
+    try:
+        model = Small_LLM_Model()
+    except OSError as error:
+        sys.exit(f"error: could not load the model: {error}")
     entries = run_pipeline(model, functions, tests)
     write_results(args.output, entries)
     print(f"Wrote {len(entries.root)} results to {args.output}")

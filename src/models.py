@@ -25,11 +25,12 @@ class ParamType(str, Enum):
     NUMBER = "number"
     STRING = "string"
     BOOLEAN = "boolean"
+    INTEGER = "integer"
 
 
 # A Python value of one of the types above -- what ends up in the
 # "parameters" object of a single output entry.
-JSONScalar = Union[float, str, bool]
+JSONScalar = Union[int, float, str, bool]
 
 
 class ParameterSpec(BaseModel):

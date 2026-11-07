@@ -28,5 +28,11 @@
     "description": "Repeat a text back.",
     "parameters": {"text": {"type": "string"}},
     "returns": {"type": "string"}
+  },
+  {
+    "name": "fn_repeat",
+    "description": "Repeat a text a given number of times.",
+    "parameters": {"text": {"type": "string"}, "times": {"type": "integer"}},
+    "returns": {"type": "string"}
   }
 ]

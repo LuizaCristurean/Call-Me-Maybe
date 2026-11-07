@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 import json
+import sys
 from llm_sdk import Small_LLM_Model
-from .constrained_decoder import ConstrainedDecoder
 from .models import (
     FunctionCall,
     FunctionsDefinition,
@@ -15,6 +15,7 @@ from .models import (
 )
 from .prompt import build_prompt
 from .vocab import load_vocab
+from .constrained_decoder import ConstrainedDecoder, StringTokens
 
 
 def clean_string(value: str, request: str) -> str:
@@ -33,6 +34,8 @@ def write_value(
     decoder: ConstrainedDecoder, kind: ParamType, more: bool, request: str
 ) -> JSONScalar:
     """Write one parameter value of the given type and return it."""
+    if kind is ParamType.INTEGER:
+        return int(decoder.number(more, integer=True))
     if kind is ParamType.NUMBER:
         return float(decoder.number(more))
     if kind is ParamType.STRING:
@@ -72,11 +75,16 @@ def run_pipeline(
 ) -> OutputEntries:
     """Turn every test prompt into a function call."""
     vocab = load_vocab(model)
+    strings = StringTokens.from_vocab(vocab)
     entries: list[OutputEntry] = []
-    for item in prompts.root:
+    for number, item in enumerate(prompts.root, start=1):
+        print(f"[{number}/{len(prompts.root)}] {item.prompt}")
         prompt = build_prompt(functions, item.prompt)
-        decoder = ConstrainedDecoder(model, vocab, prompt)
-        call = generate_call(decoder, functions, item.prompt)
+        decoder = ConstrainedDecoder.create(model, vocab, prompt, strings)
+        try:
+            call = generate_call(decoder, functions, item.prompt)
+        except (ValueError, RuntimeError) as error:
+            print(f"error: skipped prompt {number}: {error}", file=sys.stderr)
+            continue
         entries.append(OutputEntry.from_call(item.prompt, call))
-        print(f"[{len(entries)}/{len(prompts.root)}] {item.prompt}")
     return OutputEntries(root=entries)

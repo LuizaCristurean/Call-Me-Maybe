@@ -7,5 +7,6 @@
   {"prompt": "Echo the text He said \"hi\" to me"},
   {"prompt": "Echo the text café ☕ and 100%"},
   {"prompt": "Multiply 123456789 by 0.001"},
-  {"prompt": ""}
+  {"prompt": ""},
+  {"prompt": "Repeat the word hi 3 times"}
 ]
