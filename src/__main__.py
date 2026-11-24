@@ -1,4 +1,4 @@
-"""Temporary entry point -- replaced once cli.py exists (task: CLI + I/O)."""
+"""Entry point of the program: run it with ``python -m src``."""
 
 from src.cli import main
 
