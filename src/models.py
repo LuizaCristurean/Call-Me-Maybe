@@ -3,7 +3,7 @@
 These describe the three JSON shapes we read or produce:
   * a function's schema, as it appears in ``functions_definition.json``;
   * a single test prompt, as it appears in ``function_calling_tests.json``;
-  * one entry of our own output, ``function_calling_results.json``.
+  * one entry of our own output, ``function_calls.json``.
 
 Every field is validated on construction (that's the whole point of using
 pydantic here instead of raw dicts) -- a malformed functions_definition.json
@@ -84,7 +84,7 @@ class FunctionCall(BaseModel):
 
 
 class OutputEntry(BaseModel):
-    """One entry of function_calling_results.json -- exactly the three keys
+    """One entry of function_calls.json -- exactly the three keys
     the subject requires, nothing more, nothing less."""
 
     prompt: str
@@ -99,7 +99,7 @@ class OutputEntry(BaseModel):
 
 
 class OutputEntries(RootModel[list[OutputEntry]]):
-    """The whole function_calling_results.json file: a JSON array of
+    """The whole function_calls.json file: a JSON array of
     OutputEntry."""
 
     pass

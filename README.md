@@ -48,7 +48,7 @@ The program is started with:
 uv run python -m src \
     --functions_definition data/input/functions_definition.json \
     --input data/input/function_calling_tests.json \
-    --output data/output/function_calling_results.json
+    --output data/output/function_calls.json
 ```
 
 All three options are optional (the values above are the defaults). A fourth
@@ -274,10 +274,10 @@ The `--verbose` output above shows the other half: the fixed text is encoded
 $ make run
 [1/11] What is the sum of 2 and 3?
 ...
-Wrote 11 results to data/output/function_calling_results.json
+Wrote 11 results to data/output/function_calls.json
 ```
 
-Part of `data/output/function_calling_results.json`:
+Part of `data/output/function_calls.json`:
 
 ```json
 [

@@ -21,7 +21,7 @@ from .pipeline import run_pipeline
 
 DEFAULT_FUNCTIONS = Path("data/input/functions_definition.json")
 DEFAULT_TESTS = Path("data/input/function_calling_tests.json")
-DEFAULT_OUTPUT = Path("data/output/function_calling_results.json")
+DEFAULT_OUTPUT = Path("data/output/function_calls.json")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -49,7 +49,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--output",
         type=Path,
         default=DEFAULT_OUTPUT,
-        help="Where to write function_calling_results.json.",
+        help="Where to write function_calls.json.",
     )
     parser.add_argument(
         "--verbose",
